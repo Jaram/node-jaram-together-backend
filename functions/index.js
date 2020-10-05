@@ -6,7 +6,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-exports.newPod = functions.firestore.
+exports.newPod = functions.region('asia-northeast3').firestore.
     document('groupsInfo/{groupName}/pods/{podId}')
     .onCreate(async (snap, context) => {
     const data = snap.data();
@@ -24,13 +24,16 @@ exports.newPod = functions.firestore.
           console.error('Failure sending notification to', context.params.groupName, error);
           return error;
         }
-        else return result;
+        else {
+            console.log(result);
+            return result;
+        }
       });
 });
 
-exports.completePod = functions.firestore
+exports.completePod = functions.region('asia-northeast3').firestore
     .document('groupsInfo/{groupName}/pods/{podId}')
-    .onUpdate((change, context)=>{
+    .onUpdate(async (change, context)=>{
         const data = change.after.data();
         if(data.podUsers.length == data.maxUsers){
             const message = {
@@ -52,9 +55,9 @@ exports.completePod = functions.firestore
         }
     })
 
-exports.deletePod = functions.firestore
-    .document('groupsInfo/{groupName}/pods')
-    .onUpdate((change, context)=>{
+exports.deletePod = functions.region('asia-northeast3').firestore
+    .document('groupsInfo/{groupName}/pods/{podId}')
+    .onUpdate(async (change, context)=>{
         const snapshots = await db.collection(context.groupName)
         .where('timestamp', '<', Date.now())
         .get();
